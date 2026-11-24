@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World Currency &amp; All-Units Converter | HorizonSet</title>
+  <meta name="description" content="Free live converter for 200+ world currencies and 15 unit categories including length, weight, temperature, volume, area, speed, time, data, energy, pressure, and fuel.">
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+    body {
+      background: #070b14;
+      color: #e2e8f0;
+      margin: 0;
+      min-height: 100vh;
+      padding: 28px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(85px);
+      opacity: 0.36;
+      z-index: 0;
+      pointer-events: none;
+      will-change: transform;
+      animation: floatOrb 16s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 340px; height: 340px; background: #10b981; top: -90px; left: -90px; }
+    .orb-2 { width: 320px; height: 320px; background: #0284c7; bottom: -70px; right: -70px; animation-delay: -8s; }
+    @keyframes floatOrb {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(35px, 25px, 0) scale(1.08); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 900px;
+      background: rgba(17, 24, 39, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 26px;
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translate3d(0, 14px, 0); }
+      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6ee7b7;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399; }
+    .rate-status { font-size: 12px; color: #94a3b8; }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: 25px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #f8fafc, #6ee7b7, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.sub { margin: 0 0 18px; font-size: 14px; color: #94a3b8; }
+
+    /* Category Pills */
+    .cat-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+    button.cat-btn {
+      background: rgba(51, 65, 85, 0.55);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 7px 12px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+    }
+    button.cat-btn:hover { background: rgba(71, 85, 105, 0.88); color: #fff; transform: translateY(-1px); }
+    button.cat-btn.active {
+      background: linear-gradient(135deg, #059669, #0284c7);
+      color: #ffffff;
+      border-color: rgba(110, 231, 183, 0.35);
+      box-shadow: 0 3px 12px rgba(16, 185, 129, 0.28);
+    }
+
+    /* Search filter */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .filter-input {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(9, 13, 24, 0.85);
+      color: #f1f5f9;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 10px;
+      padding: 9px 13px;
+      font-size: 13.5px;
+      outline: none;
+    }
+    .filter-input:focus { border-color: #34d399; }
+    .quick-curr { display: flex; flex-wrap: wrap; gap: 5px; }
+    .q-chip {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      padding: 5px 9px;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .q-chip:hover { color: #fff; border-color: #38bdf8; }
+
+    /* Main Converter Box */
+    .conv-box {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .conv-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .conv-label { font-size: 11.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .conv-input {
+      width: 100%;
+      background: rgba(9, 13, 24, 0.9);
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 11px;
+      padding: 12px 14px;
+      font-size: 22px;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .conv-input:focus { border-color: #38bdf8; }
+
+    select.conv-select {
+      width: 100%;
+      background: rgba(9, 13, 24, 0.9);
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13.5px;
+      outline: none;
+      cursor: pointer;
+    }
+    select.conv-select:focus { border-color: #38bdf8; }
+
+    .swap-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #059669, #0284c7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+      margin-top: 18px;
+    }
+    .swap-btn:hover { transform: rotate(180deg) scale(1.06); }
+
+    .formula-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: rgba(9, 13, 24, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 10px 14px;
+      border-radius: 11px;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 18px;
+    }
+    .copy-btn {
+      background: rgba(51, 65, 85, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: rgba(71, 85, 105, 0.95); }
+
+    /* Quick All-Units Grid */
+    .all-title { font-size: 12.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .all-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+    .all-card {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .all-card:hover { border-color: rgba(56, 189, 248, 0.35); transform: translateY(-1px); }
+    .all-unit { font-size: 11.5px; color: #94a3b8; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .all-val { font-size: 14.5px; font-weight: 700; color: #38bdf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #f8fafc;
+      padding: 11px 16px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+      z-index: 99;
+      opacity: 0;
+      transform: translate3d(0, 14px, 0);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate3d(0, 0, 0); }
+
+    @media (max-width: 720px) {
+      .conv-box { grid-template-columns: 1fr; }
+      .swap-btn { margin: 2px auto; transform: rotate(90deg); }
+      .swap-btn:hover { transform: rotate(270deg); }
+      .all-grid { grid-template-columns: repeat(2, 1fr); }
+      .container { padding: 18px; }
+    }
+    @media (max-width: 460px) {
+      .all-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="container">
+    <div class="top-bar">
+      <div class="badge"><span class="badge-dot"></span> HorizonSet &bull; Universal Converter</div>
+      <span class="rate-status" id="rateStatus">Loading live world rates...</span>
+    </div>
+    <h1>World Currency &amp; All-Units Converter</h1>
+    <p class="sub">Convert 200+ world currencies with live daily rates and 14 complete scientific &amp; everyday unit categories.</p>
+
+    <div class="cat-grid" id="catGrid"></div>
+
+    <div class="filter-row">
+      <input type="text" class="filter-input" id="searchBox" placeholder="Search currency or unit (e.g. Euro, Yen, Kilometer, Pound)...">
+      <div class="quick-curr" id="quickCurr">
+        <button class="q-chip" onclick="pickQuick('usd','eur')">USD &rarr; EUR</button>
+        <button class="q-chip" onclick="pickQuick('usd','gbp')">USD &rarr; GBP</button>
+        <button class="q-chip" onclick="pickQuick('usd','jpy')">USD &rarr; JPY</button>
+        <button class="q-chip" onclick="pickQuick('eur','gbp')">EUR &rarr; GBP</button>
+        <button class="q-chip" onclick="pickQuick('btc','usd')">BTC &rarr; USD</button>
+      </div>
+    </div>
+
+    <div class="conv-box">
+      <div class="conv-side">
+        <span class="conv-label">From</span>
+        <input type="number" class="conv-input" id="valA" value="1" step="any">
+        <select class="conv-select" id="selA"></select>
+      </div>
+
+      <button class="swap-btn" title="Swap" onclick="swapUnits()">&#8644;</button>
+
+      <div class="conv-side">
+        <span class="conv-label">To</span>
+        <input type="number" class="conv-input" id="valB" value="1" step="any">
+        <select class="conv-select" id="selB"></select>
+      </div>
+    </div>
+
+    <div class="formula-bar">
+      <span id="formulaText">1 = 1</span>
+      <button class="copy-btn" onclick="copyResult()">Copy Result</button>
+    </div>
+
+    <div class="all-title" id="allTitle">All Conversions at a Glance</div>
+    <div class="all-grid" id="allGrid"></div>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    const categories = {
+      currency: { label: 'Currency (200+)', type: 'currency', defA: 'usd', defB: 'eur' },
+      length: {
+        label: 'Length', defA: 'km', defB: 'mi',
+        units: [
+          { id:'nm', name:'Nanometer (nm)', f:1e-9 },
+          { id:'um', name:'Micrometer (µm)', f:1e-6 },
+          { id:'mm', name:'Millimeter (mm)', f:0.001 },
+          { id:'cm', name:'Centimeter (cm)', f:0.01 },
+          { id:'m', name:'Meter (m)', f:1 },
+          { id:'km', name:'Kilometer (km)', f:1000 },
+          { id:'in', name:'Inch (in)', f:0.0254 },
+          { id:'ft', name:'Foot (ft)', f:0.3048 },
+          { id:'yd', name:'Yard (yd)', f:0.9144 },
+          { id:'mi', name:'Mile (mi)', f:1609.344 },
+          { id:'nmi', name:'Nautical Mile (nmi)', f:1852 },
+          { id:'fur', name:'Furlong', f:201.168 },
+          { id:'ang', name:'Angstrom (Å)', f:1e-10 },
+          { id:'au', name:'Astronomical Unit (AU)', f:1.4959787e11 },
+          { id:'ly', name:'Light-Year (ly)', f:9.4607305e15 },
+          { id:'pc', name:'Parsec (pc)', f:3.0856776e16 }
+        ]
+      },
+      weight: {
+        label: 'Weight / Mass', defA: 'kg', defB: 'lb',
+        units: [
+          { id:'ug', name:'Microgram (µg)', f:1e-9 },
+          { id:'mg', name:'Milligram (mg)', f:1e-6 },
+          { id:'g', name:'Gram (g)', f:0.001 },
+          { id:'kg', name:'Kilogram (kg)', f:1 },
+          { id:'t', name:'Metric Tonne (t)', f:1000 },
+          { id:'oz', name:'Ounce (oz)', f:0.0283495231 },
+          { id:'lb', name:'Pound (lb)', f:0.45359237 },
+          { id:'st', name:'Stone (st)', f:6.35029318 },
+          { id:'uston', name:'Short Ton (US)', f:907.18474 },
+          { id:'ukton', name:'Long Ton (UK)', f:1016.04691 },
+          { id:'ct', name:'Carat (ct)', f:0.0002 },
+          { id:'ozt', name:'Troy Ounce (oz t)', f:0.0311034768 },
+          { id:'gr', name:'Grain (gr)', f:0.00006479891 }
+        ]
+      },
+      temp: {
+        label: 'Temperature', type: 'temp', defA: 'c', defB: 'f',
+        units: [
+          { id:'c', name:'Celsius (°C)' },
+          { id:'f', name:'Fahrenheit (°F)' },
+          { id:'k', name:'Kelvin (K)' },
+          { id:'r', name:'Rankine (°R)' }
+        ]
+      },
+      volume: {
+        label: 'Volume / Cooking', defA: 'l', defB: 'usgal',
+        units: [
+          { id:'ml', name:'Milliliter (mL)', f:0.001 },
+          { id:'l', name:'Liter (L)', f:1 },
+          { id:'cm3', name:'Cubic Centimeter (cm³)', f:0.001 },
+          { id:'m3', name:'Cubic Meter (m³)', f:1000 },
+          { id:'in3', name:'Cubic Inch (in³)', f:0.016387064 },
+          { id:'ft3', name:'Cubic Foot (ft³)', f:28.3168466 },
+          { id:'tsp', name:'US Teaspoon (tsp)', f:0.00492892159 },
+          { id:'tbsp', name:'US Tablespoon (tbsp)', f:0.0147867648 },
+          { id:'floz', name:'US Fluid Ounce (fl oz)', f:0.0295735296 },
+          { id:'cup', name:'US Cup', f:0.2365882365 },
+          { id:'uspt', name:'US Pint (pt)', f:0.473176473 },
+          { id:'usqt', name:'US Quart (qt)', f:0.946352946 },
+          { id:'usgal', name:'US Gallon (gal)', f:3.785411784 },
+          { id:'ukpt', name:'Imperial Pint (UK)', f:0.56826125 },
+          { id:'ukgal', name:'Imperial Gallon (UK)', f:4.54609 },
+          { id:'bbl', name:'Oil Barrel (bbl)', f:158.9872949 }
+        ]
+      },
+      area: {
+        label: 'Area', defA: 'sqm', defB: 'sqft',
+        units: [
+          { id:'sqmm', name:'Sq Millimeter (mm²)', f:1e-6 },
+          { id:'sqcm', name:'Sq Centimeter (cm²)', f:1e-4 },
+          { id:'sqm', name:'Sq Meter (m²)', f:1 },
+          { id:'ha', name:'Hectare (ha)', f:10000 },
+          { id:'sqkm', name:'Sq Kilometer (km²)', f:1e6 },
+          { id:'sqin', name:'Sq Inch (in²)', f:0.00064516 },
+          { id:'sqft', name:'Sq Foot (ft²)', f:0.09290304 },
+          { id:'sqyd', name:'Sq Yard (yd²)', f:0.83612736 },
+          { id:'acre', name:'Acre', f:4046.8564224 },
+          { id:'sqmi', name:'Sq Mile (mi²)', f:2589988.110336 },
+          { id:'perch', name:'Perch', f:25.29285264 }
+        ]
+      },
+      speed: {
+        label: 'Speed', defA: 'kmh', defB: 'mph',
+        units: [
+          { id:'ms', name:'Meters / sec (m/s)', f:1 },
+          { id:'kmh', name:'Kilometers / hr (km/h)', f:1/3.6 },
+          { id:'mph', name:'Miles / hr (mph)', f:0.44704 },
+          { id:'kt', name:'Knot (kn)', f:1852/3600 },
+          { id:'fts', name:'Feet / sec (ft/s)', f:0.3048 },
+          { id:'mach', name:'Mach (sea level)', f:340.29 },
+          { id:'c', name:'Speed of Light (c)', f:299792458 }
+        ]
+      },
+      time: {
+        label: 'Time', defA: 'hr', defB: 'min',
+        units: [
+          { id:'ns', name:'Nanosecond (ns)', f:1e-9 },
+          { id:'us', name:'Microsecond (µs)', f:1e-6 },
+          { id:'ms', name:'Millisecond (ms)', f:0.001 },
+          { id:'s', name:'Second (s)', f:1 },
+          { id:'min', name:'Minute (min)', f:60 },
+          { id:'hr', name:'Hour (hr)', f:3600 },
+          { id:'day', name:'Day', f:86400 },
+          { id:'wk', name:'Week', f:604800 },
+          { id:'mo', name:'Month (30.44d avg)', f:2629746 },
+          { id:'yr', name:'Year (365d)', f:31536000 },
+          { id:'dec', name:'Decade', f:315360000 },
+          { id:'cen', name:'Century', f:3153600000 }
+        ]
+      },
+      data: {
+        label: 'Data Storage', defA: 'gb', defB: 'mb',
+        units: [
+          { id:'bit', name:'Bit (b)', f:1 },
+          { id:'B', name:'Byte (B)', f:8 },
+          { id:'kb', name:'Kilobit (Kb)', f:1000 },
+          { id:'KB', name:'Kilobyte (KB)', f:8000 },
+          { id:'KiB', name:'Kibibyte (KiB)', f:8192 },
+          { id:'mb_b', name:'Megabit (Mb)', f:1e6 },
+          { id:'mb', name:'Megabyte (MB)', f:8e6 },
+          { id:'MiB', name:'Mebibyte (MiB)', f:8388608 },
+          { id:'gb_b', name:'Gigabit (Gb)', f:1e9 },
+          { id:'gb', name:'Gigabyte (GB)', f:8e9 },
+          { id:'GiB', name:'Gibibyte (GiB)', f:8589934592 },
+          { id:'tb', name:'Terabyte (TB)', f:8e12 },
+          { id:'TiB', name:'Tebibyte (TiB)', f:8796093022208 },
+          { id:'pb', name:'Petabyte (PB)', f:8e15 }
+        ]
+      },
+      energy: {
+        label: 'Energy', defA: 'kcal', defB: 'kj',
+        units: [
+          { id:'j', name:'Joule (J)', f:1 },
+          { id:'kj', name:'Kilojoule (kJ)', f:1000 },
+          { id:'mj', name:'Megajoule (MJ)', f:1e6 },
+          { id:'cal', name:'Calorie (cal)', f:4.184 },
+          { id:'kcal', name:'Kilocalorie (kcal / Food)', f:4184 },
+          { id:'wh', name:'Watt-hour (Wh)', f:3600 },
+          { id:'kwh', name:'Kilowatt-hour (kWh)', f:3600000 },
+          { id:'btu', name:'BTU', f:1055.05585 },
+          { id:'ev', name:'Electronvolt (eV)', f:1.602176634e-19 },
+          { id:'ftlbf', name:'Foot-pound (ft·lbf)', f:1.35581795 }
+        ]
+      },
+      power: {
+        label: 'Power', defA: 'kw', defB: 'hp',
+        units: [
+          { id:'w', name:'Watt (W)', f:1 },
+          { id:'kw', name:'Kilowatt (kW)', f:1000 },
+          { id:'mw', name:'Megawatt (MW)', f:1e6 },
+          { id:'gw', name:'Gigawatt (GW)', f:1e9 },
+          { id:'hp', name:'Horsepower (Mechanical)', f:745.699872 },
+          { id:'hpm', name:'Horsepower (Metric)', f:735.49875 },
+          { id:'btuh', name:'BTU / hour', f:0.29307107 }
+        ]
+      },
+      pressure: {
+        label: 'Pressure', defA: 'psi', defB: 'bar',
+        units: [
+          { id:'pa', name:'Pascal (Pa)', f:1 },
+          { id:'kpa', name:'Kilopascal (kPa)', f:1000 },
+          { id:'mpa', name:'Megapascal (MPa)', f:1e6 },
+          { id:'bar', name:'Bar', f:100000 },
+          { id:'mbar', name:'Millibar (mbar)', f:100 },
+          { id:'atm', name:'Atmosphere (atm)', f:101325 },
+          { id:'psi', name:'PSI (lbf/in²)', f:6894.75729 },
+          { id:'torr', name:'Torr / mmHg', f:133.322368 }
+        ]
+      },
+      angle: {
+        label: 'Angle', defA: 'deg', defB: 'rad',
+        units: [
+          { id:'deg', name:'Degree (°)', f:1 },
+          { id:'rad', name:'Radian (rad)', f:180 / Math.PI },
+          { id:'grad', name:'Gradian (gon)', f:0.9 },
+          { id:'arcmin', name:'Arcminute (′)', f:1/60 },
+          { id:'arcsec', name:'Arcsecond (″)', f:1/3600 },
+          { id:'rev', name:'Turn / Revolution', f:360 }
+        ]
+      },
+      frequency: {
+        label: 'Frequency', defA: 'mhz', defB: 'ghz',
+        units: [
+          { id:'hz', name:'Hertz (Hz)', f:1 },
+          { id:'khz', name:'Kilohertz (kHz)', f:1e3 },
+          { id:'mhz', name:'Megahertz (MHz)', f:1e6 },
+          { id:'ghz', name:'Gigahertz (GHz)', f:1e9 },
+          { id:'rpm', name:'Revolutions / min (RPM)', f:1/60 }
+        ]
+      },
+      fuel: {
+        label: 'Fuel Economy', type: 'fuel', defA: 'kml', defB: 'mpgu',
+        units: [
+          { id:'kml', name:'Kilometers / Liter (km/L)' },
+          { id:'l100', name:'Liters / 100 km (L/100km)' },
+          { id:'mpgu', name:'Miles / Gallon (US MPG)' },
+          { id:'mpguk', name:'Miles / Gallon (UK MPG)' }
+        ]
+      }
+    };
+
+    const fallbackCurrNames = {
+      usd:'US Dollar', eur:'Euro', gbp:'British Pound', jpy:'Japanese Yen', aud:'Australian Dollar',
+      cad:'Canadian Dollar', chf:'Swiss Franc', cny:'Chinese Yuan', inr:'Indian Rupee',
+      krw:'South Korean Won', sgd:'Singapore Dollar', aed:'UAE Dirham', lkr:'Sri Lankan Rupee',
+      btc:'Bitcoin', eth:'Ethereum', xau:'Gold (Troy Oz)'
+    };
+    let currencyRates = {
+      usd:1, eur:0.92, gbp:0.79, jpy:150, aud:1.52, cad:1.38, chf:0.88, cny:7.2,
+      inr:84, krw:1380, sgd:1.34, aed:3.67, lkr:295, btc:0.000011, eth:0.0003, xau:0.00038
+    };
+    let currencyUnits = [];
+
+    const catGrid = document.getElementById('catGrid');
+    const searchBox = document.getElementById('searchBox');
+    const quickCurr = document.getElementById('quickCurr');
+    const valA = document.getElementById('valA');
+    const valB = document.getElementById('valB');
+    const selA = document.getElementById('selA');
+    const selB = document.getElementById('selB');
+    const formulaText = document.getElementById('formulaText');
+    const allGrid = document.getElementById('allGrid');
+    const rateStatus = document.getElementById('rateStatus');
+    const toast = document.getElementById('toast');
+
+    let activeCat = 'currency';
+    let lastEdited = 'A';
+    let toastTimer = null;
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2100);
+    }
+
+    function buildCurrencyUnits(namesObj, ratesObj) {
+      const popular = ['usd','eur','gbp','jpy','aud','cad','chf','cny','inr','sgd','aed','krw','btc','eth','xau'];
+      const codes = Object.keys(ratesObj);
+      codes.sort((a, b) => {
+        const ia = popular.indexOf(a), ib = popular.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      });
+      currencyUnits = codes.map(code => {
+        const label = namesObj[code] || fallbackCurrNames[code] || code.toUpperCase();
+        return { id: code, name: code.toUpperCase() + ' — ' + label };
+      });
+    }
+
+    async function loadLiveRates() {
+      try {
+        const cached = JSON.parse(localStorage.getItem('hs_rates') || 'null');
+        if (cached && cached.rates && cached.names) {
+          currencyRates = cached.rates;
+          buildCurrencyUnits(cached.names, cached.rates);
+          if (activeCat === 'currency') populateSelects(true);
+        }
+      } catch (e) {}
+
+      const urls = [
+        {
+          names: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies.min.json',
+          rates: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json'
+        },
+        {
+          names: 'https://latest.currency-api.pages.dev/v1/currencies.min.json',
+          rates: 'https://latest.currency-api.pages.dev/v1/currencies/usd.min.json'
+        }
+      ];
+
+      for (const u of urls) {
+        try {
+          const [nRes, rRes] = await Promise.all([fetch(u.names), fetch(u.rates)]);
+          if (!nRes.ok || !rRes.ok) continue;
+          const namesJson = await nRes.json();
+          const ratesJson = await rRes.json();
+          if (ratesJson && ratesJson.usd) {
+            currencyRates = ratesJson.usd;
+            buildCurrencyUnits(namesJson || fallbackCurrNames, currencyRates);
+            try { localStorage.setItem('hs_rates', JSON.stringify({ names: namesJson, rates: currencyRates, date: ratesJson.date })); } catch (e) {}
+            rateStatus.textContent = currencyUnits.length + ' currencies live (' + (ratesJson.date || 'updated') + ')';
+            if (activeCat === 'currency') populateSelects(true);
+            return;
+          }
+        } catch (e) {}
+      }
+
+      // Secondary fallback
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.rates) {
+            const lowerRates = {};
+            for (const [k, v] of Object.entries(data.rates)) lowerRates[k.toLowerCase()] = v;
+            currencyRates = lowerRates;
+            buildCurrencyUnits(fallbackCurrNames, currencyRates);
+            rateStatus.textContent = currencyUnits.length + ' currencies live';
+            if (activeCat === 'currency') populateSelects(true);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      rateStatus.textContent = 'Using cached/offline rates';
+    }
+
+    function getUnitList() {
+      return activeCat === 'currency' ? currencyUnits : categories[activeCat].units;
+    }
+
+    function fmtOut(num) {
+      if (!isFinite(num)) return '';
+      if (num === 0) return '0';
+      const abs = Math.abs(num);
+      if (activeCat === 'currency') {
+        if (abs >= 1) return Number(num.toFixed(4)).toString();
+        if (abs >= 0.0001) return Number(num.toFixed(6)).toString();
+        return Number(num.toPrecision(6)).toString();
+      }
+      if (abs >= 1e9 || (abs > 0 && abs < 1e-6)) return num.toExponential(6);
+      return Number(num.toPrecision(8)).toString();
+    }
+
+    function convertVal(val, fromId, toId) {
+      if (isNaN(val)) return NaN;
+      if (fromId === toId) return val;
+
+      if (activeCat === 'currency') {
+        const rFrom = currencyRates[fromId], rTo = currencyRates[toId];
+        if (!rFrom || !rTo) return NaN;
+        return (val / rFrom) * rTo;
+      }
+
+      if (activeCat === 'temp') {
+        let c = val;
+        if (fromId === 'f') c = (val - 32) * 5 / 9;
+        else if (fromId === 'k') c = val - 273.15;
+        else if (fromId === 'r') c = (val - 491.67) * 5 / 9;
+
+        if (toId === 'c') return c;
+        if (toId === 'f') return c * 9 / 5 + 32;
+        if (toId === 'k') return c + 273.15;
+        if (toId === 'r') return (c + 273.15) * 9 / 5;
+      }
+
+      if (activeCat === 'fuel') {
+        if (val <= 0) return 0;
+        let kml = val;
+        if (fromId === 'l100') kml = 100 / val;
+        else if (fromId === 'mpgu') kml = val * 0.425143707;
+        else if (fromId === 'mpguk') kml = val * 0.35400619;
+
+        if (toId === 'kml') return kml;
+        if (toId === 'l100') return 100 / kml;
+        if (toId === 'mpgu') return kml / 0.425143707;
+        if (toId === 'mpguk') return kml / 0.35400619;
+      }
+
+      const list = getUnitList();
+      const uFrom = list.find(u => u.id === fromId);
+      const uTo = list.find(u => u.id === toId);
+      if (!uFrom || !uTo) return NaN;
+      return (val * uFrom.f) / uTo.f;
+    }
+
+    function populateSelects(preserveSelection) {
+      const list = getUnitList();
+      const filter = searchBox.value.trim().toLowerCase();
+      const filtered = filter ? list.filter(u => u.name.toLowerCase().includes(filter) || u.id.toLowerCase().includes(filter)) : list;
+      const items = filtered.length > 0 ? filtered : list;
+
+      const prevA = preserveSelection ? selA.value : categories[activeCat].defA;
+      const prevB = preserveSelection ? selB.value : categories[activeCat].defB;
+
+      selA.innerHTML = '';
+      selB.innerHTML = '';
+      items.forEach(u => {
+        const o1 = document.createElement('option');
+        o1.value = u.id; o1.textContent = u.name;
+        const o2 = document.createElement('option');
+        o2.value = u.id; o2.textContent = u.name;
+        selA.appendChild(o1);
+        selB.appendChild(o2);
+      });
+
+      selA.value = items.some(u => u.id === prevA) ? prevA : items[0].id;
+      selB.value = items.some(u => u.id === prevB) ? prevB : (items[1] ? items[1].id : items[0].id);
+      runConvert();
+    }
+
+    function runConvert() {
+      const fromId = selA.value, toId = selB.value;
+      if (lastEdited === 'A') {
+        const v = parseFloat(valA.value);
+        valB.value = isNaN(v) ? '' : fmtOut(convertVal(v, fromId, toId));
+      } else {
+        const v = parseFloat(valB.value);
+        valA.value = isNaN(v) ? '' : fmtOut(convertVal(v, toId, fromId));
+      }
+
+      const list = getUnitList();
+      const nameA = (list.find(u => u.id === fromId) || {}).name || fromId;
+      const nameB = (list.find(u => u.id === toId) || {}).name || toId;
+      const vA = parseFloat(valA.value);
+      const vB = parseFloat(valB.value);
+      formulaText.textContent = (!isNaN(vA) && !isNaN(vB))
+        ? `${valA.value} ${nameA} = ${valB.value} ${nameB}`
+        : 'Enter a value to convert';
+
+      // All Conversions grid (first 12 units of current category)
+      allGrid.innerHTML = '';
+      const baseVal = !isNaN(vA) ? vA : 1;
+      const previewUnits = list.filter(u => u.id !== fromId).slice(0, 12);
+      previewUnits.forEach(u => {
+        const card = document.createElement('div');
+        card.className = 'all-card';
+        card.onclick = () => { selB.value = u.id; lastEdited = 'A'; runConvert(); };
+        const lbl = document.createElement('div');
+        lbl.className = 'all-unit';
+        lbl.textContent = u.name;
+        const val = document.createElement('div');
+        val.className = 'all-val';
+        val.textContent = fmtOut(convertVal(baseVal, fromId, u.id));
+        card.appendChild(lbl);
+        card.appendChild(val);
+        allGrid.appendChild(card);
+      });
+    }
+
+    function pickQuick(a, b) {
+      searchBox.value = '';
+      populateSelects(false);
+      if (currencyRates[a] && currencyRates[b]) {
+        selA.value = a;
+        selB.value = b;
+        lastEdited = 'A';
+        runConvert();
+      }
+    }
+
+    function swapUnits() {
+      const tmp = selA.value;
+      selA.value = selB.value;
+      selB.value = tmp;
+      lastEdited = 'A';
+      runConvert();
+    }
+
+    function copyResult() {
+      if (!valB.value) return showToast('Nothing to copy yet!');
+      const txt = formulaText.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt);
+      }
+      showToast('Copied: ' + txt);
+    }
+
+    // Build category buttons
+    Object.entries(categories).forEach(([key, cat]) => {
+      const btn = document.createElement('button');
+      btn.className = 'cat-btn' + (key === activeCat ? ' active' : '');
+      btn.textContent = cat.label;
+      btn.onclick = () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeCat = key;
+        quickCurr.style.display = key === 'currency' ? 'flex' : 'none';
+        searchBox.value = '';
+        valA.value = 1;
+        lastEdited = 'A';
+        populateSelects(false);
+      };
+      catGrid.appendChild(btn);
+    });
+
+    valA.addEventListener('input', () => { lastEdited = 'A'; runConvert(); });
+    valB.addEventListener('input', () => { lastEdited = 'B'; runConvert(); });
+    selA.addEventListener('change', () => { lastEdited = 'A'; runConvert(); });
+    selB.addEventListener('change', () => { lastEdited = 'A'; runConvert(); });
+    searchBox.addEventListener('input', () => populateSelects(true));
+
+    buildCurrencyUnits(fallbackCurrNames, currencyRates);
+    populateSelects(false);
+    loadLiveRates();
+  </script>
+</body>
+</html>
